@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -52,11 +52,27 @@ async function run() {
       console.log(result);
     });
 
-    // post donate request
+    // post donation request
     app.post("/create-donation-request", async (req, res) => {
       const data = req.body;
       data.createdAt = new Date();
       const result = await requestCollections.insertOne(data);
+      res.send(result);
+    });
+
+    // get donation request
+    app.get("/create-donation-request", async (req, res) => {
+      const result = await requestCollections.find().toArray();
+      res.send(result);
+    });
+
+    // get donation request by id
+    app.get("/donation-request/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+
+      const query = { _id: new ObjectId(id) };
+      const result = await requestCollections.findOne(query);
       res.send(result);
     });
 
