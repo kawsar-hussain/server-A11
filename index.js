@@ -98,6 +98,22 @@ async function run() {
       res.send(result);
     });
 
+    // update donation status
+    const { ObjectId } = require("mongodb");
+
+    app.patch("/update/donation-status/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+
+      const query = { _id: new ObjectId(id) };
+      const updateStatus = {
+        $set: { status: status },
+      };
+
+      const result = await requestCollections.updateOne(query, updateStatus);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
