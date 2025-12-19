@@ -66,6 +66,14 @@ async function run() {
       res.send(result);
     });
 
+    // get donation request by email
+    app.get("/my-requests", async (req, res) => {
+      const userEmail = req.query.email;
+      const query = { requesterEmail: userEmail };
+      const result = await requestCollections.find(query).toArray();
+      res.send(result);
+    });
+
     // get donation request by id
     app.get("/donation-request/:id", async (req, res) => {
       const id = req.params.id;
