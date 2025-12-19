@@ -76,6 +76,20 @@ async function run() {
       res.send(result);
     });
 
+    // update user status
+    app.patch("/update/user-status", async (req, res) => {
+      const { email, status } = req.query;
+      const query = { email: email };
+
+      const updateStatus = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = await userCollections.updateOne(query, updateStatus);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
