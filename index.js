@@ -98,6 +98,20 @@ async function run() {
       res.send(result);
     });
 
+    // update user role
+    app.patch("/update/user-role", async (req, res) => {
+      const { email, role } = req.query;
+      const query = { email: email };
+
+      const updateRole = {
+        $set: {
+          role: role,
+        },
+      };
+      const result = await userCollections.updateOne(query, updateRole);
+      res.send(result);
+    });
+
     // update donation status
     const { ObjectId } = require("mongodb");
 
