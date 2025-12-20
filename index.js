@@ -42,7 +42,7 @@ async function run() {
       res.send(result);
     });
 
-    // get role by email
+    // get user by email
     app.get("/users/:email", async (req, res) => {
       const { email } = req.params;
 
@@ -147,6 +147,20 @@ async function run() {
       const id = req.params;
       const query = { _id: new ObjectId(id) };
       const result = await requestCollections.deleteOne(query);
+      res.send(result);
+    });
+
+    // update profile
+    app.put("/update/profile/:email", async (req, res) => {
+      const data = req.body;
+      const { email } = req.params;
+      const query = { email: email };
+
+      const updateUser = {
+        $set: data,
+      };
+
+      const result = await userCollections.updateOne(query, updateUser);
       res.send(result);
     });
 
