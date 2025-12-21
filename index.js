@@ -196,7 +196,7 @@ async function run() {
       res.send({ url: session.url });
     });
 
-    // post success payment data
+    // post payment data
     app.post("/success-payment", async (req, res) => {
       const { session_id } = req.query;
       const session = await stripe.checkout.sessions.retrieve(session_id);
@@ -219,9 +219,16 @@ async function run() {
           paymentStatus: session.payment_status,
           paidAt: new Date(),
         };
+        console.log(session);
         const result = await paymentCollections.insertOne(paymentInfo);
         return res.send(result);
       }
+    });
+
+    // get payment data
+    app.get("/success-payment", async (req, res) => {
+      const result = await paymentCollections.find().toArray();
+      res.send(result);
     });
 
     await client.db("admin").command({ ping: 1 });
