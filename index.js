@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const port = 3000;
+const stripe = require("stripe")(process.env.STRIP_SECRETE);
+const crypto = require("crypto");
 
 const app = express();
 app.use(cors());
@@ -26,6 +28,7 @@ async function run() {
     const database = client.db("Assignment11");
     const userCollections = database.collection("users");
     const requestCollections = database.collection("request");
+    const paymentCollections = database.collection("payment");
 
     // post user data
     app.post("/users", async (req, res) => {
@@ -162,6 +165,63 @@ async function run() {
 
       const result = await userCollections.updateOne(query, updateUser);
       res.send(result);
+    });
+
+    // payment
+    app.post("/create-payment-checkout", async (req, res) => {
+      const information = req.body;
+      const amount = parseInt(information.donateAmount) * 100;
+
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              unit_amount: amount,
+              product_data: {
+                name: "Please Donate to DonateX",
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        metadata: {
+          donorName: information?.donorName,
+        },
+        customer_email: information?.donorEmail,
+        success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`,
+      });
+      res.send({ url: session.url });
+    });
+
+    // post success payment data
+    app.post("/success-payment", async (req, res) => {
+      const { session_id } = req.query;
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+      console.log(session);
+
+      const transactionId = session.payment_intent;
+
+      const isPaymentExist = await paymentCollections.findOne({ transactionId });
+
+      if (isPaymentExist) {
+        return;
+      }
+
+      if (session.payment_status == "paid") {
+        const paymentInfo = {
+          amount: session.amount_total / 100,
+          currency: session.currency,
+          donorEmail: session.customer_email,
+          transactionId,
+          paymentStatus: session.payment_status,
+          paidAt: new Date(),
+        };
+        const result = await paymentCollections.insertOne(paymentInfo);
+        return res.send(result);
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
